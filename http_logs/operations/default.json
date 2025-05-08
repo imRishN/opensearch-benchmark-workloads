@@ -581,83 +581,167 @@
   }
 },
 {
-  "name": "scroll",
+  "name": "bool-simple-status-agg",
   "operation-type": "search",
   "index": "logs-*",
-  "pages": 25,
-  "results-per-page": 1000,
   "body": {
-      "query": {
-          "match_all": {}
+    "size": 0,
+    "query": {
+      "bool": {
+        "must": [
+          {
+            "range": {
+              "@timestamp": {
+                "gte": "1998-05-01T00:00:00Z",
+                "lt": "1998-05-02T00:00:00Z"
+              }
+            }
+          },
+          {
+            "term": {"status": "200"}
+          }
+        ]
       }
+    },
+    "aggs": {
+      "size_stats": {
+        "stats": {
+          "field": "size"
+        }
+      }
+    }
   }
 },
 {
-  "name": "desc_sort_timestamp",
+  "name": "bool-simple-should-status",
   "operation-type": "search",
   "index": "logs-*",
   "body": {
-      "query": {
-          "match_all": {}
-      },
-      "sort": [
-          {
-              "@timestamp": "desc"
+    "size": 0,
+    "query": {
+      "bool": {
+        "should": [
+          {"term": {"status": 200}},
+          {"term": {"status": 304}}
+        ]
+      }
+    },
+    "aggs": {
+      "by_status": {
+        "terms": {
+          "field": "status",
+          "size": 10
+        },
+        "aggs": {
+          "avg_size": {
+            "avg": {
+              "field": "size"
+            }
           }
-      ]
+        }
+      }
+    }
   }
 },
 {
-  "name": "desc_sort_with_after_timestamp",
+  "name": "bool-must-should-agg",
   "operation-type": "search",
   "index": "logs-*",
   "body": {
-      "track_total_hits": false,
-      "query": {
-          "match_all": {}
-      },
-      "sort": [
+    "size": 0,
+    "query": {
+      "bool": {
+        "must": [
           {
-              "@timestamp": "desc"
+            "range": {
+              "@timestamp": {
+                "gte": "1998-05-01T00:00:00Z",
+                "lt": "1998-05-02T00:00:00Z"
+              }
+            }
+          },
+          {
+            "bool": {
+              "should": [
+                {"term": {"status": 200}},
+                {"term": {"status": 404}}
+              ]
+            }
           }
-      ],
-      "search_after": [
-          "1998-06-10"
-      ]
+        ]
+      }
+    },
+    "aggs": {
+      "status_stats": {
+        "terms": {
+          "field": "status",
+          "size": 10
+        },
+        "aggs": {
+          "bytes_sum": {
+            "sum": {
+              "field": "size"
+            }
+          }
+        }
+      }
+    }
   }
 },
 {
-  "name": "asc_sort_timestamp",
+  "name": "bool-complex-status-ranges",
   "operation-type": "search",
   "index": "logs-*",
   "body": {
-      "query": {
-          "match_all": {}
-      },
-      "sort": [
+    "size": 0,
+    "query": {
+      "bool": {
+        "must": [
           {
-              "@timestamp": "asc"
-          }
-      ]
-  }
-},
-{
-  "name": "asc_sort_with_after_timestamp",
-  "operation-type": "search",
-  "index": "logs-*",
-  "body": {
-      "track_total_hits": false,
-      "query": {
-          "match_all": {}
-      },
-      "sort": [
+            "range": {
+              "@timestamp": {
+                "gte": "1998-05-01T00:00:00Z",
+                "lt": "1998-05-02T00:00:00Z"
+              }
+            }
+          },
           {
-              "@timestamp": "asc"
+            "bool": {
+              "should": [
+                {"range": {"status": {"gte": 200, "lt": 300}}},
+                {
+                  "bool": {
+                    "should": [
+                      {"term": {"status": 304}},
+                      {"range": {"status": {"gte": 400, "lt": 500}}}
+                    ]
+                  }
+                }
+              ]
+            }
           }
-      ],
-      "search_after": [
-          "1998-06-10"
-      ]
+        ]
+      }
+    },
+    "aggs": {
+      "status_groups": {
+        "range": {
+          "field": "status",
+          "ranges": [
+            {"from": 200, "to": 300, "key": "2xx"},
+            {"from": 300, "to": 400, "key": "3xx"},
+            {"from": 400, "to": 500, "key": "4xx"}
+          ]
+        },
+        "aggs": {
+          "size_stats": {
+            "stats": {
+              "field": "size"
+            }
+          }
+        }
+      }
+    }
   }
 },
 {
