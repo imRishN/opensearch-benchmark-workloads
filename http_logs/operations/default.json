@@ -604,8 +604,8 @@
       }
     },
     "aggs": {
-      "size_stats": {
-        "stats": {
+      "size_avg": {
+        "avg": {
           "field": "size"
         }
       }
@@ -734,8 +734,8 @@
           ]
         },
         "aggs": {
-          "size_stats": {
-            "stats": {
+          "size_avg": {
+            "avg": {
               "field": "size"
             }
           }
